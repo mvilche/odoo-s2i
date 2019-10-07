@@ -1,0 +1,350 @@
+    ##comienzo Template
+  apiVersion: v1
+  kind: Template
+  metadata:
+    name: odoo-openshift-mvilche
+    labels:
+      template: odoo-openshift-mvilche
+      autor: "Martin_Fabrizzio_Vilche"
+    annotations:
+      openshift.io/display-name: "odoo-openshift-mvilche"
+      iconClass: "icon-github"
+      description: >-
+        ODOO - OPENSHIFT
+        Martin Fabrizzio Vilche.
+        https://github.com/mvilche.
+      openshift.io/provider-display-name: "Martin Fabrizzio Vilche"
+      openshift.io/documentation-url: "https://github.com/mvilche/odoo.git"
+      openshift.io/support-url: "https://github.com/mvilche/odoo.git"
+  message: >-
+    Los servicios iniciarán en un par de minutos...
+    Martin Fabrizzio Vilche        
+
+  objects:
+
+
+##################### odoo
+
+
+  - apiVersion: v1
+    data:
+      odoo.cfg: |-
+        [options]
+        db_host=postgresql
+        db_port=5432
+        db_user=odoo
+        db_password=odoo
+        addons_path=/opt/odoo/addons,/opt/odoo/custom_addons
+        data_dir=/opt/odoo/datadir
+        xmlrpc_port=8070
+    kind: ConfigMap
+    metadata:
+      name: odoo
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: odoo-community
+      name: odoo
+    spec:
+      ports:
+        - name: http
+          port: 8070
+          protocol: TCP
+          targetPort: 8070
+      selector:
+        app: odoo-community
+        deploymentconfig: odoo
+      sessionAffinity: None
+      type: ClusterIP
+
+  - apiVersion: v1
+    kind: Route
+    metadata:
+      labels:
+        app: odoo-community
+      name: odoo
+    spec:
+      port:
+        targetPort: http
+      to:
+        kind: Service
+        name: odoo
+        weight: 100
+      wildcardPolicy: None
+
+
+
+
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: odoo-community
+      name: "odoo"
+    spec:
+      replicas: 1
+      revisionHistoryLimit: 10
+      selector:
+        app: odoo-community
+        deploymentconfig: odoo
+      strategy:
+        activeDeadlineSeconds: 21600
+        resources: {}
+        rollingParams:
+          intervalSeconds: 1
+          maxSurge: 25%
+          maxUnavailable: 25%
+          timeoutSeconds: 600
+          updatePeriodSeconds: 1
+        type: Rolling
+      template:
+        metadata:
+          labels:
+            app: odoo-community
+            deploymentconfig: odoo
+        spec:
+          containers:
+            - env:
+                - name: TIMEZONE
+                  value: America/Montevideo
+              image: "odoo:${ODOO_VERSION}"
+              imagePullPolicy: Always
+              name: odoo
+              livenessProbe:
+                failureThreshold: 3
+                initialDelaySeconds: 10
+                periodSeconds: 20
+                successThreshold: 1
+                httpGet:
+                  port: 8070
+                  path: /
+                timeoutSeconds: 15
+              readinessProbe:
+                failureThreshold: 3
+                initialDelaySeconds: 10
+                periodSeconds: 20
+                successThreshold: 1
+                httpGet:
+                  port: 8070
+                  path: /
+                timeoutSeconds: 15              
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /opt/odoo/server-config
+                  name: odoo
+                - mountPath: /opt/odoo/datadir
+                  name: odoo-datadir
+                  subPath: odoo-datadir
+                - mountPath: /opt/odoo/custom_addons
+                  name: odoo-datadir
+                  subPath: custom-addons                  
+              ports:
+                - containerPort: 8070
+                  protocol: TCP
+              resources:
+                limits:
+                  cpu: '1'
+                  memory: 1Gi
+                requests:
+                  cpu: 500m
+                  memory: 256Mi                              
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - configMap:
+                name: odoo
+              name: odoo
+            - name: odoo-datadir
+              persistentVolumeClaim:
+                claimName: odoo-data          
+      test: false
+      triggers:
+        - type: ConfigChange
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - odoo
+            from:
+              kind: ImageStreamTag
+              name: "odoo:${ODOO_VERSION}"
+          type: ImageChange
+
+  - apiVersion: v1
+    kind: DeploymentConfig
+    metadata:
+      labels:
+        app: odoo-community
+      name: postgresql
+    spec:
+      replicas: 1
+      selector:
+        app: odoo-community
+        deploymentconfig: postgresql
+      strategy:
+        activeDeadlineSeconds: 21600
+        resources: {}
+        type: Recreate
+      template:
+        metadata:
+          labels:
+            app: odoo-community
+            deploymentconfig: postgresql
+        spec:
+          containers:
+            - env:
+                - name: POSTGRESQL_USER
+                  value: odoo
+                - name: POSTGRESQL_PASSWORD
+                  value: odoo
+                - name: POSTGRESQL_DATABASE
+                  value: odoo
+              image: postgresql:10
+              imagePullPolicy: Always
+              name: postgresql
+              ports:
+                - containerPort: 5432
+                  protocol: TCP
+              readinessProbe:
+                exec:
+                  command:
+                  - /bin/sh
+                  - -i
+                  - -c
+                  - psql -h 127.0.0.1 -U $POSTGRESQL_USER -q -d $POSTGRESQL_DATABASE -c 'SELECT 1'
+                failureThreshold: 3
+                initialDelaySeconds: 60
+                periodSeconds: 10
+                successThreshold: 1
+                timeoutSeconds: 1
+              resources:
+                limits:
+                  cpu: 1000m
+                  memory: 512Mi
+                requests:
+                  cpu: 500m
+                  memory: 256Mi
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              volumeMounts:
+                - mountPath: /var/lib/pgsql/data
+                  name: postgresql-1
+                  subPath: postgresql
+          dnsPolicy: ClusterFirst
+          restartPolicy: Always
+          schedulerName: default-scheduler
+          securityContext: {}
+          terminationGracePeriodSeconds: 30
+          volumes:
+            - name: postgresql-1
+              persistentVolumeClaim:
+                claimName: odoo-data
+      test: false
+      triggers:
+        - type: ConfigChange
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - postgresql
+            from:
+              kind: ImageStreamTag
+              name: 'postgresql:${POSTGRES_VERSION}'
+          type: ImageChange
+
+
+
+  - apiVersion: v1
+    kind: Service
+    metadata:
+      labels:
+        app: odoo-community
+      name: postgresql
+    spec:
+      ports:
+        - name: tcp
+          port: 5432
+          protocol: TCP
+          targetPort: 5432
+      selector:
+        app: odoo-community
+        deploymentconfig: postgresql
+      sessionAffinity: None
+      type: ClusterIP
+
+
+
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+        name: postgresql
+    spec:
+        tags:
+          - name: '${POSTGRES_VERSION}'
+            from:
+                kind: DockerImage
+                name: centos/postgresql-${POSTGRES_VERSION}-centos7:latest
+
+
+
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: odoo-community
+      name: odoo
+    spec:
+      completionDeadlineSeconds: 1800
+      output:
+        to:
+          kind: ImageStreamTag
+          name: odoo:${ODOO_VERSION}
+      source:
+        contextDir: ${ODOO_VERSION}
+        git:
+          ref: master
+          uri: 'https://github.com/mvilche/odoo.git'
+        type: Git
+      strategy:
+        dockerStrategy:
+          dockerfilePath: Dockerfile
+      triggers:
+        - type: "ConfigChange"
+
+
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: odoo-community
+      name: odoo
+    spec: {}
+
+
+  - apiVersion: v1
+    kind: PersistentVolumeClaim
+    metadata:
+      finalizers:
+      - kubernetes.io/pvc-protection
+      name: odoo-data
+    spec:
+      accessModes:
+      - ReadWriteOnce
+      resources:
+        requests:
+          storage: 100Gi
+
+
+  parameters:
+    - name: ODOO_VERSION
+      displayName: Versión de odoo a instalar
+      value: '11'
+      required: true
+    - name: POSTGRES_VERSION
+      displayName: Versión de postgres a instalar
+      value: '10'
+      required: true
+
