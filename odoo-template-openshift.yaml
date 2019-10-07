@@ -347,4 +347,3 @@
       displayName: Versión de postgres a instalar
       value: '10'
       required: true
-
