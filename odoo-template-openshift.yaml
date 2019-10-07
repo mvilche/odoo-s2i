@@ -315,6 +315,80 @@
         - type: "ConfigChange"
 
 
+
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: odoo-community
+      name: odoo
+    spec:
+      completionDeadlineSeconds: 1800
+      failedBuildsHistoryLimit: 5
+      nodeSelector: null
+      output:
+        to:
+          kind: ImageStreamTag
+          name: odoo:${ODOO_VERSION}
+      postCommit: {}
+      resources: {}
+      runPolicy: Serial
+      source:
+        git:
+          uri: ${REPO_GIT}
+          ref: ${BRANCH_GIT}
+        type: Git
+        sourceSecret:
+          name: ${SOURCE_SECRET}
+      strategy:
+        sourceStrategy:
+          from:
+            kind: ImageStreamTag
+            name: odoo-s2i:${ODOO_VERSION}
+        type: Source
+      successfulBuildsHistoryLimit: 5
+      triggers:
+        - type: ConfigChange
+        - imageChange:
+            from:
+              kind: "ImageStreamTag"
+              name: odoo-s2i:${ODOO_VERSION}
+
+
+
+  - apiVersion: v1
+    kind: BuildConfig
+    metadata:
+      labels:
+        app: odoo-community
+      name: odoo-s2i
+    spec:
+      completionDeadlineSeconds: 1800
+      output:
+        to:
+          kind: ImageStreamTag
+          name: odoo-s2i:${ODOO_VERSION}
+      source:
+        contextDir: ${ODOO_VERSION}
+        git:
+          ref: master
+          uri: 'https://github.com/mvilche/odoo-s2i.git'
+        type: Git
+      strategy:
+        dockerStrategy:
+          dockerfilePath: Dockerfile
+      triggers:
+        - type: "ConfigChange"        
+
+
+  - apiVersion: v1
+    kind: ImageStream
+    metadata:
+      labels:
+        app: odoo-community
+      name: odoo-s2i
+    spec: {}
+
   - apiVersion: v1
     kind: ImageStream
     metadata:
@@ -346,4 +420,16 @@
     - name: POSTGRES_VERSION
       displayName: Versión de postgres a instalar
       value: '10'
+      required: true
+    - name: REPO_GIT
+      displayName: Repositorio git custom addons
+      value: ''
+      required: true
+    - name: BRANCH_GIT
+      displayName: Nombre del branch
+      value: 'master'
+      required: true
+    - name: SOURCE_SECRET
+      displayName: Nombre del secret
+      value: 'gitlab'
       required: true

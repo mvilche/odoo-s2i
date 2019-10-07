@@ -14,10 +14,10 @@ COPY s2i/bin/ /usr/libexec/s2i
 RUN mkdir -p /opt/odoo/server-config /opt/odoo/custom_addons && rm -rf /etc/localtime  && touch /etc/timezone /etc/localtime && \
 adduser -D -u 1001 -h /opt/odoo odoo && \
 usermod -aG 0 odoo && \
-chown 1001 -R /opt /usr/bin/run.sh /etc/timezone /etc/localtime  && \
-chgrp -R 0 /opt /usr/bin/run.sh /etc/timezone /etc/localtime && \
-chmod g=u -R /opt /usr/bin/run.sh /etc/timezone /etc/localtime && \
-chmod +x /opt/odoo/odoo-bin /usr/bin/run.sh && \
+chown 1001 -R /opt /etc/timezone /etc/localtime /usr/libexec/s2i  && \
+chgrp -R 0 /opt /etc/timezone /etc/localtime /usr/libexec/s2i && \
+chmod g=u -R /opt /etc/timezone /etc/localtime /usr/libexec/s2i && \
+chmod +x /opt/odoo/odoo-bin /usr/libexec/s2i/* && \
 chmod g+w /etc/passwd && \
 rm -rf /var/cache/apk/*
 WORKDIR /opt/odoo
