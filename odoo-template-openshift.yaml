@@ -306,7 +306,7 @@
         contextDir: ${ODOO_VERSION}
         git:
           ref: master
-          uri: 'https://github.com/mvilche/odoo.git'
+          uri: 'https://github.com/mvilche/odoo-s2i.git'
         type: Git
       strategy:
         dockerStrategy:
