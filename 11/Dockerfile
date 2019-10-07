@@ -1,9 +1,16 @@
 FROM alpine:3.10
 ENV PYTHON_VERSION=python3 ODOO_VERSION=11.0 ODOO_REPO=https://github.com/odoo/odoo.git
-RUN apk add --no-cache --update $PYTHON_VERSION shadow curl nodejs npm wkhtmltopdf tzdata postgresql-dev git gcc libxml2 libxslt-dev py3-lxml libxml2-dev libc-dev python3-dev jpeg-dev py3-psutil linux-headers openldap-dev tiff-dev && \
+LABEL autor="Martin Vilche <mfvilche@gmail.com>" \
+      io.k8s.description="Odoo s2i images" \
+      io.k8s.display-name="Odoo python" \
+      io.openshift.tags="builder,python,s2i,odoo" \
+      io.openshift.expose-services="8070" \
+      org.jboss.deployments-dir="/opt/odoo/custom_addons" \
+      io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
+RUN apk add --no-cache --update $PYTHON_VERSION bash shadow curl nodejs npm wkhtmltopdf tzdata postgresql-dev git gcc libxml2 libxslt-dev py3-lxml libxml2-dev libc-dev python3-dev jpeg-dev py3-psutil linux-headers openldap-dev tiff-dev && \
 pip3 install --upgrade pip
 RUN mkdir -p /opt && cd /opt && git clone --depth=1 -b $ODOO_VERSION $ODOO_REPO && cd /opt/odoo && pip3 install -r requirements.txt && npm install -g less
-COPY run.sh /usr/bin/run.sh
+COPY s2i/bin/ /usr/libexec/s2i
 RUN mkdir -p /opt/odoo/server-config /opt/odoo/custom_addons && rm -rf /etc/localtime  && touch /etc/timezone /etc/localtime && \
 adduser -D -u 1001 -h /opt/odoo odoo && \
 usermod -aG 0 odoo && \
@@ -17,5 +24,4 @@ WORKDIR /opt/odoo
 EXPOSE 8070
 ENV HOME /opt/odoo
 USER 1001
-ENTRYPOINT ["/usr/bin/run.sh"]
-CMD ["-c", "/opt/odoo/server-config/odoo.cfg"]
+CMD ["/usr/libexec/s2i/usage"]

@@ -20,4 +20,4 @@ echo "openshift:x:$ID:$ID:Openshift user,,,:/opt/odoo:/bin/bash" >> /etc/passwd
 echo "INICIANDO ODOO...."
 
 sleep 2s
-exec /opt/odoo/odoo-bin "$@"
+exec /opt/odoo/odoo.py "$@"
