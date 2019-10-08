@@ -14,9 +14,9 @@ COPY s2i/bin/ /usr/libexec/s2i
 RUN mkdir -p /opt/odoo/server-config /opt/odoo/custom_addons && rm -rf /etc/localtime  && touch /etc/timezone /etc/localtime && \
 adduser -D -u 1001 -h /opt/odoo odoo && \
 usermod -aG 0 odoo && \
-chown 1001 -R /opt /etc/timezone /etc/localtime /usr/libexec/s2i  && \
-chgrp -R 0 /opt /etc/timezone /etc/localtime /usr/libexec/s2i && \
-chmod g=u -R /opt /etc/timezone /etc/localtime /usr/libexec/s2i && \
+chown 1001 -R /opt /etc/timezone /etc/localtime /usr/libexec/s2i /usr/lib/python*  /usr/include/python*  && \
+chgrp -R 0 /opt /etc/timezone /etc/localtime /usr/libexec/s2i /usr/lib/python*  /usr/include/python* && \
+chmod g=u -R /opt /etc/timezone /etc/localtime /usr/libexec/s2i /usr/lib/python*  /usr/include/python* && \
 chmod +x /opt/odoo/odoo-bin /usr/libexec/s2i/* && \
 chmod g+w /etc/passwd && \
 rm -rf /var/cache/apk/*
