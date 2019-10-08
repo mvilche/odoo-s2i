@@ -1,4 +1,11 @@
-#!/bin/sh
+#!/bin/bash -e
+#
+# S2I run script for the 'springboot-sti' image.
+# The run script executes the server that runs your application.
+#
+# For more information see the documentation:
+#	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
+#
 set -e
 
 if [ -z "$TIMEZONE" ]; then
@@ -17,7 +24,8 @@ fi
 
 ID=$(id -u)
 echo "openshift:x:$ID:$ID:Openshift user,,,:/opt/odoo:/bin/bash" >> /etc/passwd
-echo "INICIANDO ODOO...."
 
+until nc -z -v -w5 postgresql 5432; do echo waiting for postgres; sleep 5; done;
+echo "INICIANDO ODOO...."
 sleep 2s
-exec /opt/odoo/odoo.py "$@"
+exec /opt/odoo/odoo-bin -c /opt/odoo/server-config/odoo.cfg
