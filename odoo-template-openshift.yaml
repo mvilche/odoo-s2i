@@ -137,10 +137,7 @@
                   name: odoo
                 - mountPath: /opt/odoo/datadir
                   name: odoo-datadir
-                  subPath: odoo-datadir
-                - mountPath: /opt/odoo/custom_addons
-                  name: odoo-datadir
-                  subPath: custom-addons                  
+                  subPath: odoo-datadir                 
               ports:
                 - containerPort: 8070
                   protocol: TCP
@@ -287,32 +284,6 @@
             from:
                 kind: DockerImage
                 name: centos/postgresql-${POSTGRES_VERSION}-centos7:latest
-
-
-
-  - apiVersion: v1
-    kind: BuildConfig
-    metadata:
-      labels:
-        app: odoo-community
-      name: odoo
-    spec:
-      completionDeadlineSeconds: 1800
-      output:
-        to:
-          kind: ImageStreamTag
-          name: odoo:${ODOO_VERSION}
-      source:
-        contextDir: ${ODOO_VERSION}
-        git:
-          ref: master
-          uri: 'https://github.com/mvilche/odoo-s2i.git'
-        type: Git
-      strategy:
-        dockerStrategy:
-          dockerfilePath: Dockerfile
-      triggers:
-        - type: "ConfigChange"
 
 
 
