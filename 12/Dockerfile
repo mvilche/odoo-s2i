@@ -7,7 +7,7 @@ LABEL autor="Martin Vilche <mfvilche@gmail.com>" \
       io.openshift.expose-services="8070" \
       org.jboss.deployments-dir="/opt/odoo/custom_addons" \
       io.openshift.s2i.scripts-url="image:///usr/libexec/s2i"
-RUN apk add --no-cache --update $PYTHON_VERSION bash shadow curl nodejs npm wkhtmltopdf tzdata postgresql-dev git gcc libxml2 libxslt-dev py3-lxml libxml2-dev libc-dev python3-dev jpeg-dev py3-psutil linux-headers openldap-dev tiff-dev && \
+RUN apk add --no-cache --update $PYTHON_VERSION alpine-sdk bash shadow curl nodejs npm wkhtmltopdf tzdata postgresql-dev git gcc libxml2 libxslt-dev py3-lxml libxml2-dev libc-dev python3-dev jpeg-dev py3-psutil linux-headers openldap-dev tiff-dev && \
 pip3 install --upgrade pip
 RUN mkdir -p /opt && cd /opt && git clone --depth=1 -b $ODOO_VERSION $ODOO_REPO && cd /opt/odoo && pip3 install -r requirements.txt && npm install -g less
 COPY s2i/bin/ /usr/libexec/s2i
