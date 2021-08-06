@@ -1,5 +1,5 @@
 FROM alpine:3.14
-ENV ODOO_VERSION=11.0 ODOO_REPO=https://github.com/odoo/odoo.git
+ENV ODOO_VERSION=13.0 ODOO_REPO=https://github.com/odoo/odoo.git
 LABEL autor="Martin Vilche <mfvilche@gmail.com>" \
       io.k8s.description="Odoo s2i images" \
       io.k8s.display-name="Odoo python" \

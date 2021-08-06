@@ -1,0 +1,29 @@
+#!/bin/bash -e
+#
+# S2I assemble script for the 's2i-maven-java' image.
+# The 'assemble' script builds your application source so that it is ready to run.
+#
+# For more information refer to the documentation:
+#	https://github.com/openshift/source-to-image/blob/master/docs/builder_image.md
+#
+
+set -e
+
+
+shopt -u dotglob
+
+if [[ "$1" == "-h" ]]; then
+  exec /usr/libexec/s2i/usage
+fi
+
+
+echo "---> INSTALANDO CODIGO FUENTE..."
+cp -Rf /tmp/src/* /opt/odoo/custom_addons/
+
+if [ -f "/opt/odoo/custom_addons/requirements.txt" ]; then
+echo "---> INSTALANDO DEPENDENCIAS PYTHON..."
+cd /opt/odoo/custom_addons && pip3 install -r requirements.txt    
+else
+echo "---> NO SE ENCONTRARON DEPENDENCIAS DE PYTHON DEFINIDOAS.."
+fi
+echo "---> CODIGO FUENTE INSTALADO..."
