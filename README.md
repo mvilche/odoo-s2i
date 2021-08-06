@@ -6,7 +6,7 @@
 # Funcionalidades:
 
   - Non-root
-  - Openshift!
+  - Okd!
 
 ### Iniciar
 
